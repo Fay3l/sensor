@@ -1,0 +1,9 @@
+[package]
+name = "sensor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = {version="1.44.1",features=["full"]}
+tokio-serial = "5.4.5"
+tokio-stream = "0.1.17"
