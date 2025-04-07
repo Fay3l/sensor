@@ -1,19 +1,19 @@
+// use tokio::time::{sleep, Duration};
+// use std::time::Instant;
+
 pub mod tf_luna;
 pub mod ld2410c;
 
 #[tokio::main]
 async fn main() {
-    let mut tf_luna = tf_luna::TfLuna::new("COM8".to_string());
-    tf_luna.connect().await.unwrap();
-    tf_luna.set_output_frequency(tf_luna::OutputFrequency::Freq10Hz).await;
-    tf_luna.set_output_format_setting(tf_luna::OutputFormat::NineByteCm).await;
-    tf_luna.set_distance_limit_setting(0, 800).await;
+    let mut ld2410c = ld2410c::Ld2410C::new("COM7".to_string());
+    ld2410c.connect().await.unwrap();
+    // ld2410c.set_enabling_configuration().await;
+    // ld2410c.set_bluetooth_module(ld2410c::BluetoothModule::TurnOn).await;
+    // ld2410c.read_firmware_version().await;
+    // ld2410c.set_ending_configuration().await;
     loop {
-        tf_luna.read_data().await.unwrap();
-        println!("Get configuration");
-        tf_luna.get_configuration(tf_luna::OutputMode::Frequency).await;
-        println!("--------------------------");
-
+        ld2410c.read_data().await.unwrap();
     }
 }
 
