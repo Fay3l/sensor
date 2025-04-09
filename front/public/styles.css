@@ -9,11 +9,11 @@ body {
 
 .detection-area {
     position: relative;
-    width: 400px;
-    height: 400px;
+    width: 200px;
+    height: 200px;
     border: 2px solid #000;
     border-radius: 50%;
-    background-color: #2ce029;
+    background-color: #f2f4f2;
 }
 .ten {
     background-image:
@@ -28,4 +28,20 @@ body {
     background-color: red;
     border-radius: 50%;
     transform: translate(-50%, -50%);
+}
+.page-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    background-color: #f0f0f0;
+    height: 100vh;
+}
+.gates-container{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 20px;
+    
 }

@@ -1,14 +1,16 @@
 use std::vec;
+use serde::Serialize;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_serial::{SerialPortBuilderExt, SerialStream};
+
 
 pub struct Ld2410C {
     path: String,
     baud_rate: u32,
     stream: Option<SerialStream>,
 }
-#[derive(Debug,Clone, PartialEq)]
+#[derive(Debug,Clone, PartialEq,Serialize)]
 enum DataType {
     EngineeringMode=0x01,
     TargetBasicInformation=0x02,
@@ -22,7 +24,7 @@ impl DataType {
         }
     }
 }
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,Serialize)]
 enum TargetStatus {
     NoTarget,
     CampaignTarget,
@@ -40,7 +42,7 @@ impl TargetStatus {
         }
     }
 }
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,Serialize)]
 #[allow(dead_code)]
 struct EngineeringModel {
     maximum_mov_distance_gate:u8,
@@ -62,7 +64,7 @@ impl EngineeringModel {
     }
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,Serialize)]
 #[allow(dead_code)]
 struct TargetData {
     target_status: TargetStatus,
@@ -90,9 +92,9 @@ impl TargetData {
         }
     }
 }
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,Serialize)]
 #[allow(dead_code)]
-struct Ld2410CData {
+pub struct Ld2410CData {
     data_type: DataType,
     head: u8,
     target_data: TargetData,
@@ -216,28 +218,31 @@ impl Ld2410C {
             Err(e) => Err(Box::new(e)),
         }
     }
-    pub async fn read_data(&mut self) -> Result<Ld2410CData, String> {
+    pub async fn read_data(&mut self) -> anyhow::Result<Ld2410CData> {
+        let mut buf = [0u8; 1024];
+        let res = self.stream.as_mut().unwrap().read(&mut buf).await?;
+        if buf[4] == 0x0D || buf[4] == 0x23  {
+            println!("Received: {:?}", &buf[6..buf[4] as usize + 6]);
+            let data = &buf[6..buf[4] as usize + 6];
+            let data_type = DataType::find_type(data);
+            let target_status = TargetStatus::find_status(data);
+            let target_data = TargetData::new(target_status, data);
+            let ld2410cdata = Ld2410CData::new(data_type, target_data, data);
+            println!("Data Type: {:?}", ld2410cdata);
+            Ok(ld2410cdata)
+        } else {
+            Err(anyhow::anyhow!("Invalid data received"))
+        }
+    }
+
+    async fn response_configuration(&mut self) {
         let mut buf = [0u8; 1024];
         match self.stream.as_mut().unwrap().read(&mut buf).await {
             Ok(n) => {
-                if buf[4] == 0x0D || buf[4] == 0x23  {
-                    println!("Received: {:?}", &buf[6..buf[4] as usize + 6]);
-                    let data = &buf[6..buf[4] as usize + 6];
-                    let data_type = DataType::find_type(data);
-                    let target_status = TargetStatus::find_status(data);
-                    let target_data = TargetData::new(target_status, data);
-                    let ld2410cdata = Ld2410CData::new(data_type, target_data, data);
-                    println!("Data Type: {:?}", ld2410cdata);
-                    Ok(ld2410cdata)
-                } 
-                else {
-                    println!("Error length: {:?}", n);
-                    Err("Invalid data length".to_string())
-                }
-                
+                println!("Received: {:?}", &buf[..n]);
             }
             Err(e) => {
-                Err(format!("Error fn read_data(): {:?}",e).to_string())
+                println!("Error fn read_data_(): {:?}",e);
             }
         }
     }
@@ -257,14 +262,14 @@ impl Ld2410C {
         let data_length = vec![0x04, 0x00];
         let frame = Ld2410CFrame::new(data_length, command);
         self.write_data(&frame.to_u8()).await;
-        self.read_data().await.unwrap();
+        self.response_configuration().await;
     }
     async fn set_ending_configuration(&mut self) {
         let command = Ld2410CCommand::new(vec![0xFE, 0x00], vec![]);
         let data_length = vec![0x02, 0x00];
         let frame = Ld2410CFrame::new(data_length, command);
         self.write_data(&frame.to_u8()).await;
-        self.read_data().await.unwrap();
+        self.response_configuration().await;
     }
     pub async fn read_firmware_version(&mut self) {
         self.set_enabling_configuration().await;
@@ -272,7 +277,7 @@ impl Ld2410C {
         let data_length = vec![0x02, 0x00];
         let frame = Ld2410CFrame::new(data_length, command);
         self.write_data(&frame.to_u8()).await;
-        self.read_data().await.unwrap();
+        self.response_configuration().await;
         self.set_ending_configuration().await;
     }
     pub async fn set_bluetooth_module(&mut self, module: BluetoothModule) {
@@ -281,7 +286,7 @@ impl Ld2410C {
         let data_length = vec![0x04, 0x00];
         let frame = Ld2410CFrame::new(data_length, command);
         self.write_data(&frame.to_u8()).await;
-        self.read_data().await.unwrap();
+        self.response_configuration().await;
         self.set_ending_configuration().await;
     }
     pub async fn set_engineering_mode(&mut self) {
@@ -290,7 +295,7 @@ impl Ld2410C {
         let data_length = vec![0x02, 0x00];
         let frame = Ld2410CFrame::new(data_length, command);
         self.write_data(&frame.to_u8()).await;
-        self.read_data().await.unwrap();
+        self.response_configuration().await;
         self.set_ending_configuration().await;
     }
     pub async fn set_engineering_mode_off(&mut self) {
@@ -299,7 +304,7 @@ impl Ld2410C {
         let data_length = vec![0x02, 0x00];
         let frame = Ld2410CFrame::new(data_length, command);
         self.write_data(&frame.to_u8()).await;
-        self.read_data().await.unwrap();
+        self.response_configuration().await;
         self.set_ending_configuration().await;
     }
     pub async fn read_prameter(&mut self) {
@@ -308,7 +313,7 @@ impl Ld2410C {
         let data_length = vec![0x02, 0x00];
         let frame = Ld2410CFrame::new(data_length, command);
         self.write_data(&frame.to_u8()).await;
-        self.read_data().await.unwrap();
+        self.response_configuration().await;
         self.set_ending_configuration().await;
     }
 }
