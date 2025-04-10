@@ -42,10 +42,9 @@ function updateInterface(data) {
     const staticTargetDistance = document.getElementById('stationary_target_distance');
     const detectionTargetDistance = document.getElementById('detection_distance');
 
-
     const movementGates = data.target_data.engineering_model?.mouvement_distance_gates;
     const staticGates = data.target_data.engineering_model?.static_distance_gates;
-    
+
     mouvementDistanceGate0.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[0];
     mouvementDistanceGate1.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[1];
     mouvementDistanceGate2.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[2];
@@ -64,10 +63,10 @@ function updateInterface(data) {
     staticDistanceGate6.innerHTML = data.target_data.engineering_model?.static_distance_gates[6];
     staticDistanceGate7.innerHTML = data.target_data.engineering_model?.static_distance_gates[7];
     staticDistanceGate8.innerHTML = data.target_data.engineering_model?.static_distance_gates[8];
-    
-    staticTargetDistance.innerHTML = data.target_data.stationary_target_distance/100;
-    detectionTargetDistance.innerHTML = data.target_data.detection_distance/100;
-    movementTargetDistance.innerHTML = data.target_data.movement_target_distance/100;
+
+    staticTargetDistance.innerHTML = data.target_data.stationary_target_distance / 100;
+    detectionTargetDistance.innerHTML = data.target_data.detection_distance / 100;
+    movementTargetDistance.innerHTML = data.target_data.movement_target_distance / 100;
 
     // Trouver la porte où la personne bouge ou est statique
     const movementGate = findGate(movementGates);
@@ -89,20 +88,11 @@ function updateInterface(data) {
     const angleInRadians = Math.atan((detectionDistance / 100) / (0.75 * detectedGate));
     const detectionAngle = (angleInRadians * 180) / Math.PI; // Convertir en degrés
 
-    // Calculer les coordonnées du point détecté
-    const radius = 200; // Rayon du cercle de détection en pixels
-    const x = radius + (radius * Math.cos(angleInRadians)) * (detectionDistance / 5);
-    const y = radius + (radius * Math.sin(angleInRadians)) * (detectionDistance / 5);
-
-    // Mettre à jour la position du point détecté
-    // const detectedPoint = document.getElementById('detectedPoint');
-    // detectedPoint.style.left = `${x}px`;
-    // detectedPoint.style.top = `${y}px`;
 
     // Afficher les informations dans la console
     state.innerHTML = "Porte détectée : " + detectedGate;
-    distance.innerHTML = detectionDistance/100 ;
-    angle.innerHTML = detectionAngle ;
+    distance.innerHTML = detectionDistance / 100;
+    angle.innerHTML = detectionAngle;
     console.log(`Porte détectée : ${detectedGate}`);
     console.log(`Distance : ${detectionDistance.toFixed(2)} m`);
     console.log(`Angle : ${detectionAngle.toFixed(2)}°`);

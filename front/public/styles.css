@@ -7,27 +7,11 @@ body {
     background-color: #f0f0f0;
 }
 
-.detection-area {
-    position: relative;
-    width: 200px;
-    height: 200px;
-    border: 2px solid #000;
-    border-radius: 50%;
-    background-color: #f2f4f2;
-}
+
 .ten {
     background-image:
         linear-gradient(126deg, transparent 50%, white 50%),
         linear-gradient(90deg, white 50%, transparent 50%);
-}
-
-.detected-point {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background-color: red;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
 }
 .page-container{
     display: flex;
@@ -45,3 +29,5 @@ body {
     gap: 20px;
     
 }
+
+

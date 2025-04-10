@@ -310,13 +310,13 @@ impl Ld2410C {
         self.baud_rate = baud_rate;
     }
 
-    pub async fn connect(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn connect(&mut self) -> anyhow::Result<()> {
         match tokio_serial::new(&self.path, self.baud_rate).open_native_async() {
             Ok(stream) => {
                 self.stream = Some(stream);
                 Ok(())
             }
-            Err(e) => Err(Box::new(e)),
+            Err(e) => Err(e.into()),
         }
     }
     pub async fn read_data(&mut self) -> anyhow::Result<Ld2410CData> {
