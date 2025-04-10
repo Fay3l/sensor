@@ -1,3 +1,7 @@
+// ld2410c.rs
+// This file contains the implementation of the Ld2410C class, which is used to communicate with the LD2410C radar module.
+// It includes methods for connecting to the module, reading data, and sending commands to configure the module's settings.
+// Fayel MOHAMED
 use serde::Serialize;
 use std::vec;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
