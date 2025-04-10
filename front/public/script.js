@@ -43,27 +43,27 @@ function updateInterface(data) {
     const detectionTargetDistance = document.getElementById('detection_distance');
 
 
-    const movementGates = data.target_data.engineering_model.mouvement_distance_gates;
-    const staticGates = data.target_data.engineering_model.static_distance_gates;
+    const movementGates = data.target_data.engineering_model?.mouvement_distance_gates;
+    const staticGates = data.target_data.engineering_model?.static_distance_gates;
     
-    mouvementDistanceGate0.innerHTML = data.target_data.engineering_model.mouvement_distance_gates[0];
-    mouvementDistanceGate1.innerHTML = data.target_data.engineering_model.mouvement_distance_gates[1];
-    mouvementDistanceGate2.innerHTML = data.target_data.engineering_model.mouvement_distance_gates[2];
-    mouvementDistanceGate3.innerHTML = data.target_data.engineering_model.mouvement_distance_gates[3];
-    mouvementDistanceGate4.innerHTML = data.target_data.engineering_model.mouvement_distance_gates[4];
-    mouvementDistanceGate5.innerHTML = data.target_data.engineering_model.mouvement_distance_gates[5];
-    mouvementDistanceGate6.innerHTML = data.target_data.engineering_model.mouvement_distance_gates[6];
-    mouvementDistanceGate7.innerHTML = data.target_data.engineering_model.mouvement_distance_gates[7];
-    mouvementDistanceGate8.innerHTML = data.target_data.engineering_model.mouvement_distance_gates[8];
-    staticDistanceGate0.innerHTML = data.target_data.engineering_model.static_distance_gates[0];
-    staticDistanceGate1.innerHTML = data.target_data.engineering_model.static_distance_gates[1];
-    staticDistanceGate2.innerHTML = data.target_data.engineering_model.static_distance_gates[2];
-    staticDistanceGate3.innerHTML = data.target_data.engineering_model.static_distance_gates[3];
-    staticDistanceGate4.innerHTML = data.target_data.engineering_model.static_distance_gates[4];
-    staticDistanceGate5.innerHTML = data.target_data.engineering_model.static_distance_gates[5];
-    staticDistanceGate6.innerHTML = data.target_data.engineering_model.static_distance_gates[6];
-    staticDistanceGate7.innerHTML = data.target_data.engineering_model.static_distance_gates[7];
-    staticDistanceGate8.innerHTML = data.target_data.engineering_model.static_distance_gates[8];
+    mouvementDistanceGate0.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[0];
+    mouvementDistanceGate1.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[1];
+    mouvementDistanceGate2.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[2];
+    mouvementDistanceGate3.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[3];
+    mouvementDistanceGate4.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[4];
+    mouvementDistanceGate5.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[5];
+    mouvementDistanceGate6.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[6];
+    mouvementDistanceGate7.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[7];
+    mouvementDistanceGate8.innerHTML = data.target_data.engineering_model?.mouvement_distance_gates[8];
+    staticDistanceGate0.innerHTML = data.target_data.engineering_model?.static_distance_gates[0];
+    staticDistanceGate1.innerHTML = data.target_data.engineering_model?.static_distance_gates[1];
+    staticDistanceGate2.innerHTML = data.target_data.engineering_model?.static_distance_gates[2];
+    staticDistanceGate3.innerHTML = data.target_data.engineering_model?.static_distance_gates[3];
+    staticDistanceGate4.innerHTML = data.target_data.engineering_model?.static_distance_gates[4];
+    staticDistanceGate5.innerHTML = data.target_data.engineering_model?.static_distance_gates[5];
+    staticDistanceGate6.innerHTML = data.target_data.engineering_model?.static_distance_gates[6];
+    staticDistanceGate7.innerHTML = data.target_data.engineering_model?.static_distance_gates[7];
+    staticDistanceGate8.innerHTML = data.target_data.engineering_model?.static_distance_gates[8];
     
     staticTargetDistance.innerHTML = data.target_data.stationary_target_distance/100;
     detectionTargetDistance.innerHTML = data.target_data.detection_distance/100;
