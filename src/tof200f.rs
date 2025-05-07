@@ -35,8 +35,9 @@ impl TOF200F {
         let mut buf = [0u8; 1024];
         match self.stream.as_mut().unwrap().read(&mut buf).await {
             Ok(n) => {
-                println!("Buffer: {:?}", &buf[3..5]);
-                println!("Distance: {:?} mm", (&buf[4]+(255*&buf[3])));
+                println!("Buffer: {:?}", &buf[3..n]);
+                let distance = (u16::from(buf[4]) + (u16::from(buf[3]) * 255)) as u16;
+                println!("Distance: {:?} mm", distance);
                 Ok(())
             }
             Err(e) => {

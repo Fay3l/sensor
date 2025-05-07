@@ -313,7 +313,8 @@ impl Ld2410C {
     pub fn set_baud_rate(&mut self, baud_rate: u32) {
         self.baud_rate = baud_rate;
     }
-
+    // connect() This method opens the serial port connection to the LD2410C radar module.
+    // It uses the tokio_serial crate to create a new serial port stream with the specified baud rate.
     pub async fn connect(&mut self) -> anyhow::Result<()> {
         match tokio_serial::new(&self.path, self.baud_rate).open_native_async() {
             Ok(stream) => {
@@ -323,6 +324,8 @@ impl Ld2410C {
             Err(e) => Err(e.into()),
         }
     }
+    // read_data() This method reads data from the LD2410C radar module. It reads a buffer of 1024 bytes and checks the header and tail of the data.
+    // If the header is 0x0D or 0x23, it processes the data to extract the data type and target status.
     pub async fn read_data(&mut self) -> anyhow::Result<Ld2410CData> {
         let mut buf = [0u8; 1024];
         self.stream.as_mut().unwrap().read(&mut buf).await?;
@@ -338,7 +341,8 @@ impl Ld2410C {
             Ok(Ld2410CData::default())
         }
     }
-
+    // response_configuration() This method reads the response configuration from the LD2410C radar module.
+    // It reads a buffer of 1024 bytes and returns the data as a vector of bytes.
     async fn response_configuration(&mut self) -> anyhow::Result<Vec<u8>> {
         let mut buf = [0u8; 1024];
         match self.stream.as_mut().unwrap().read(&mut buf).await {
@@ -351,6 +355,8 @@ impl Ld2410C {
         }
     }
 
+    // write_data() This method writes data to the LD2410C radar module. It takes a command as a byte slice and sends it to the module.
+    // It returns the command as a vector of bytes.
     async fn write_data(&mut self, command: &[u8])-> anyhow::Result<Vec<u8>> {
         match self.stream.as_mut().unwrap().write(command).await {
             Ok(_) => {
