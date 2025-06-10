@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>RD03D Targets</title>
+</head>
+
+<body>
+    <script>
+        const eventSource = new EventSource("/rd03d/sse");
+        eventSource.onmessage = (event) => {
+            const targets = JSON.parse(event.data);
+            let html = '';
+            targets.forEach((t, i) => {
+                html += `<tr>
+                    <td>${i + 1}</td>
+                    <td>${t.x}</td>
+                    <td>${t.y}</td>
+                    <td>${t.speed}</td>
+                    <td>${Math.round(t.distance)}</td>
+                    <td>${Math.round(t.angle)}</td>
+                </tr>`;
+            });
+            document.getElementById('rd03d-body').innerHTML = html;
+        };
+    </script>
+    <h1>Coordonnées RD03D</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>X (mm)</th>
+                <th>Y (mm)</th>
+                <th>Vitesse (cm/s)</th>
+                <th>Distance (mm)</th>
+                <th>Angle (°)</th>
+            </tr>
+        </thead>
+        <tbody id="rd03d-body">
+            {% for t in targets %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ t.x }}</td>
+                <td>{{ t.y }}</td>
+                <td>{{ t.speed }}</td>
+                <td>{{ t.distance as i64 }}</td>
+                <td>{{ t.angle as i64 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+
+</html>

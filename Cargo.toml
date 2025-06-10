@@ -6,6 +6,7 @@ authors = ["Fayel MOHAMED <fayel.mohamed1@gmail.com>"]
 
 [dependencies]
 anyhow = "1.0.97"
+askama = {version="0.14.0",features=["derive","alloc"]}
 async-stream = "0.3.6"
 axum = {version="0.8.3",features=["macros"]}
 futures = "0.3.31"
