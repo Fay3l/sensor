@@ -99,18 +99,18 @@
 
         // Fonction pour trouver la porte où la personne est détectée
         function findGate(gates) {
+            if (!Array.isArray(gates)) {
+                return null; // Pas de données, aucune détection
+            }
             let detectedGates = [];
             gates.forEach((value, index) => {
                 if (value === 100) {
-                    detectedGates.push(index + 1); // Les index commencent à 0, donc on ajoute 1
+                    detectedGates.push(index + 1);
                 }
             });
-
             if (detectedGates.length === 0) {
-                return null; // Aucune détection
+                return null;
             }
-
-            // Retourner la moyenne des portes détectées
             return detectedGates.reduce((a, b) => a + b, 0) / detectedGates.length;
         }
 

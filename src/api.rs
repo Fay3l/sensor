@@ -78,7 +78,7 @@ async fn ld2410c_handler() -> axum::response::Html<String> {
 async fn ld2410c_sse_handler() -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let stream = IntervalStream::new(tokio::time::interval(std::time::Duration::from_secs(1)))
         .then(|_| async {
-            let mut ld2410c = ld2410c::Ld2410C::new("COM8".to_string());
+            let mut ld2410c = ld2410c::Ld2410C::new("COM7".to_string());
             let mut data = String::from("{}");
             ld2410c.connect().await.unwrap();
             match ld2410c.read_data().await {
