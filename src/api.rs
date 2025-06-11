@@ -35,9 +35,21 @@ async fn rd03d_sse_handler() -> Sse<impl Stream<Item = Result<Event, Infallible>
     let stream = IntervalStream::new(interval).then(|_| async {
         let mut rd03d = rd03d::RD03D::new("COM7".to_string());
         if rd03d.connect().await.is_ok() {
-            let _ = rd03d.update().await;
-            let data = serde_json::to_string(&rd03d.targets).unwrap_or_else(|_| "[]".to_string());
-            Ok(Event::default().data(data))
+            if rd03d.update().await.unwrap() {
+                let target1 = rd03d.get_target(1);
+                let target2 = rd03d.get_target(2);
+                let target3 = rd03d.get_target(3);
+                if let (Some(t1), Some(t2), Some(t3)) = (target1, target2, target3) {
+                    rd03d.targets = vec![t1.clone(), t2.clone(), t3.clone()];
+                    let data = serde_json::to_string(&rd03d.targets).unwrap_or_else(|_| "[]".to_string());
+                    Ok(Event::default().data(data))
+                } else {
+                    rd03d.targets.clear();
+                    Ok(Event::default().data("[]"))
+                }
+            } else {
+                Ok(Event::default().data("[]"))
+            }
         } else {
             Ok(Event::default().data("[]"))
         }

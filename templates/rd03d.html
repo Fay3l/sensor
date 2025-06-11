@@ -4,52 +4,132 @@
 <head>
     <meta charset="UTF-8">
     <title>RD03D Targets</title>
+    <style>
+        body {
+            background-color: rgba(241, 241, 241, 0.781);
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        #radarCanvas {
+            display: block;
+            margin: auto;
+            background-color: black;
+            border-radius: 15px;
+            padding: 15px;
+        }
+    </style>
 </head>
 
 <body>
+
+    <h1>Coordonnées RD03D</h1>
+    <div style="display: flex; flex-direction: column; gap: 40px;">
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>X (mm)</th>
+                    <th>Y (mm)</th>
+                    <th>Vitesse (cm/s)</th>
+                    <th>Distance (mm)</th>
+                    <th>Angle (°)</th>
+                </tr>
+            </thead>
+            <tbody id="rd03d-body">
+                {% for t in targets %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ t.x }}</td>
+                    <td>{{ t.y }}</td>
+                    <td>{{ t.speed }}</td>
+                    <td>{{ t.distance as i64 }}</td>
+                    <td>{{ t.angle as i64 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <canvas id="radarCanvas" width="700" height="400"></canvas>
+
+    </div>
     <script>
-        const eventSource = new EventSource("/rd03d/sse");
-        eventSource.onmessage = (event) => {
-            const targets = JSON.parse(event.data);
+        const canvas = document.getElementById("radarCanvas");
+        const ctx = canvas.getContext("2d");
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height;
+
+        const maxRange = 7000; // en mm
+        const radius = 350; // pixels
+        const mmtoPixels = radius / maxRange; // pixels par mm
+
+        function drawRadar(targets) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = "green";
+            ctx.lineWidth = 1;
+
+            // Arc de cercle (zones)
+            for (let r = 1; r <= 4; r++) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, r * radius / 4, Math.PI, 2 * Math.PI);
+                ctx.stroke();
+            }
+
+            // Lignes d'angle
+            for (let a = -60; a <= 60; a += 15) {
+                const rad = (a * Math.PI) / 180;
+                const x = centerX + radius * Math.sin(rad);
+                const y = centerY - radius * Math.cos(rad);
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+
+            // Cibles
+            targets.forEach((target, index) => {
+                const px = centerX + target.x * mmtoPixels;
+                const py = centerY - target.y * mmtoPixels;
+
+                // Cercle de la cible
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = target.speed < 0 ? 'lime' : (target.speed > 0 ? 'red' : 'gray');
+                ctx.fill();
+
+                // Etiquette
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.fillText(`T${index + 1}`, px + 8, py - 8);
+            });
+        }
+
+
+        // Table HTML
+        function updateTable(targets) {
             let html = '';
             targets.forEach((t, i) => {
                 html += `<tr>
-                    <td>${i + 1}</td>
-                    <td>${t.x}</td>
-                    <td>${t.y}</td>
-                    <td>${t.speed}</td>
-                    <td>${Math.round(t.distance)}</td>
-                    <td>${Math.round(t.angle)}</td>
-                </tr>`;
+            <td>${i + 1}</td>
+            <td>${t.x}</td>
+            <td>${t.y}</td>
+            <td>${t.speed}</td>
+            <td>${Math.round(t.distance)}</td>
+            <td>${Math.round(t.angle)}</td>
+        </tr>`;
             });
             document.getElementById('rd03d-body').innerHTML = html;
+        }
+
+        // SSE
+        const eventSource = new EventSource("/rd03d/sse");
+        eventSource.onmessage = (event) => {
+            const targets = JSON.parse(event.data);
+            updateTable(targets);
+            drawRadar(targets);
         };
     </script>
-    <h1>Coordonnées RD03D</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>X (mm)</th>
-                <th>Y (mm)</th>
-                <th>Vitesse (cm/s)</th>
-                <th>Distance (mm)</th>
-                <th>Angle (°)</th>
-            </tr>
-        </thead>
-        <tbody id="rd03d-body">
-            {% for t in targets %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ t.x }}</td>
-                <td>{{ t.y }}</td>
-                <td>{{ t.speed }}</td>
-                <td>{{ t.distance as i64 }}</td>
-                <td>{{ t.angle as i64 }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 </body>
 
 </html>
