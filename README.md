@@ -7,6 +7,7 @@ This project features a Rust-powered backend and a modern web dashboard for real
 - **LD2410C** (mmWave radar): Detects presence, movement, and distance across configurable gates.
 - **RD03D** (Doppler radar): Tracks up to three targets, providing X/Y position, speed, distance, and angle.
 - **TF-Luna** (Lidar): Measures distance in real time (if enabled).
+- **TOF200F** (Time-of-Flight sensor): Provides high-precision distance measurements with a wide detection range and fast response time.
 
 The backend connects to sensors via serial ports, parses incoming data, and serves it through HTTP APIs and Server-Sent Events (SSE). The frontend (HTML/JavaScript) delivers live data streams and interactive radar visualizations.
 
@@ -34,7 +35,7 @@ This project follows standard Rust conventions with Cargo. Here are the main fil
 
 ### 2. Installation
 
- **[Clone the repository]()**
+**[Clone the repository](#clone-the-repository)**
 
 ### 3. Configuration
 Edit the serial port names in src/api.rs or your sensor modules to match your hardware (e.g., "COM7", "COM8").
