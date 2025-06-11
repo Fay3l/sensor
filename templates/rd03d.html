@@ -57,10 +57,10 @@
         const canvas = document.getElementById("radarCanvas");
         const ctx = canvas.getContext("2d");
         const centerX = canvas.width / 2;
-        const centerY = canvas.height;
+        const centerY = canvas.height; // Radar en bas du canvas
 
-        const maxRange = 7000; // en mm
-        const radius = 350; // pixels
+        const maxRange = 7000; // mm
+        const radius = 350; // pixels (demi-largeur du radar)
         const mmtoPixels = radius / maxRange; // pixels par mm
 
         function drawRadar(targets) {
@@ -69,14 +69,14 @@
             ctx.strokeStyle = "green";
             ctx.lineWidth = 1;
 
-            // Arc de cercle (zones)
+            // Arcs de distance
             for (let r = 1; r <= 4; r++) {
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, r * radius / 4, Math.PI, 2 * Math.PI);
                 ctx.stroke();
             }
 
-            // Lignes d'angle
+            // Lignes d'angle (-60° à +60°)
             for (let a = -60; a <= 60; a += 15) {
                 const rad = (a * Math.PI) / 180;
                 const x = centerX + radius * Math.sin(rad);
@@ -89,9 +89,9 @@
 
             // Cibles
             targets.forEach((target, index) => {
-                const px = centerX + target.x * mmtoPixels;
-                const py = centerY - target.y * mmtoPixels;
-
+                // X = décalage latéral, Y = distance devant le radar
+                let px= centerX - target.x * mmtoPixels;
+                let py = centerY - Math.abs(target.y) * mmtoPixels;
                 // Cercle de la cible
                 ctx.beginPath();
                 ctx.arc(px, py, 6, 0, 2 * Math.PI);
@@ -102,9 +102,9 @@
                 ctx.fillStyle = 'white';
                 ctx.font = '12px Arial';
                 ctx.fillText(`T${index + 1}`, px + 8, py - 8);
+                console.log(`T${index+1}: x=${target.x}, y=${target.y}, px=${px}, py=${py}`);
             });
         }
-
 
         // Table HTML
         function updateTable(targets) {
