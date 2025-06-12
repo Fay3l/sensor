@@ -20,46 +20,53 @@ struct Ld2410cTemplate {
     data: ld2410c::Ld2410CData,
 }
 
-pub async fn api() -> Router {
+pub async fn api(port: String) -> Router {
+    let rd03d_port = port.clone();
+    let rd03d_sse_port = port.clone();
+    let ld2410c_port = port.clone();
+    let ld2410c_sse_port = port.clone();
     Router::new()
-        .route("/rd03d", get(rd03d_handler))
-        .route("/rd03d/sse", get(rd03d_sse_handler))
-        .route("/ld2410c", get(ld2410c_handler))
-        .route("/ld2410c/sse", get(ld2410c_sse_handler))  
+        .route("/rd03d", get(move || rd03d_handler(rd03d_port.clone())))
+        .route("/rd03d/sse", get(move || rd03d_sse_handler(rd03d_sse_port.clone())))
+        .route("/ld2410c", get(move || ld2410c_handler(ld2410c_port.clone())))
+        .route("/ld2410c/sse", get(move || ld2410c_sse_handler(ld2410c_sse_port.clone())))  
         .layer(CorsLayer::new().allow_origin(Any))
 }
 
 
-async fn rd03d_sse_handler() -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+async fn rd03d_sse_handler(port: String) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let interval = tokio::time::interval(std::time::Duration::from_secs(1));
-    let stream = IntervalStream::new(interval).then(|_| async {
-        let mut rd03d = rd03d::RD03D::new("COM7".to_string());
-        if rd03d.connect().await.is_ok() {
-            if rd03d.update().await.unwrap() {
-                let target1 = rd03d.get_target(1);
-                let target2 = rd03d.get_target(2);
-                let target3 = rd03d.get_target(3);
-                if let (Some(t1), Some(t2), Some(t3)) = (target1, target2, target3) {
-                    rd03d.targets = vec![t1.clone(), t2.clone(), t3.clone()];
-                    let data = serde_json::to_string(&rd03d.targets).unwrap_or_else(|_| "[]".to_string());
-                    Ok(Event::default().data(data))
+    let stream = IntervalStream::new(interval).then(move |_| {
+        let port = port.clone();
+        async move {
+            let mut rd03d = rd03d::RD03D::new(port.clone());
+            if rd03d.connect().await.is_ok() {
+                if rd03d.update().await.unwrap() {
+                    let target1 = rd03d.get_target(1);
+                    let target2 = rd03d.get_target(2);
+                    let target3 = rd03d.get_target(3);
+                    if let (Some(t1), Some(t2), Some(t3)) = (target1, target2, target3) {
+                        rd03d.targets = vec![t1.clone(), t2.clone(), t3.clone()];
+                        let data = serde_json::to_string(&rd03d.targets).unwrap_or_else(|_| "[]".to_string());
+                        Ok(Event::default().data(data))
+                    } else {
+                        rd03d.targets.clear();
+                        Ok(Event::default().data("[]"))
+                    }
                 } else {
-                    rd03d.targets.clear();
                     Ok(Event::default().data("[]"))
                 }
             } else {
                 Ok(Event::default().data("[]"))
             }
-        } else {
-            Ok(Event::default().data("[]"))
         }
     });
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
 
-async fn rd03d_handler() -> axum::response::Html<String> {
-    let mut rd03d = rd03d::RD03D::new("COM7".to_string());
+async fn rd03d_handler(port: String) -> axum::response::Html<String> {
+    let mut rd03d = rd03d::RD03D::new(port);
     if let Err(e) = rd03d.connect().await {
         return axum::response::Html(format!("<p>Erreur connexion RD03D: {e}</p>"));
     }
@@ -73,8 +80,8 @@ async fn rd03d_handler() -> axum::response::Html<String> {
     }
 }
 
-async fn ld2410c_handler() -> axum::response::Html<String> {
-    let mut ld2410c = ld2410c::Ld2410C::new("COM7".to_string());
+async fn ld2410c_handler(port: String) -> axum::response::Html<String> {
+    let mut ld2410c = ld2410c::Ld2410C::new(port);
     if let Err(e) = ld2410c.connect().await {
         return axum::response::Html(format!("<p>Erreur connexion LD2410C: {e}</p>"));
     }
@@ -87,17 +94,21 @@ async fn ld2410c_handler() -> axum::response::Html<String> {
 }
 
 // Handler SSE pour /ld2410c/sse
-async fn ld2410c_sse_handler() -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+async fn ld2410c_sse_handler(port: String) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    let port = port.clone();
     let stream = IntervalStream::new(tokio::time::interval(std::time::Duration::from_secs(1)))
-        .then(|_| async {
-            let mut ld2410c = ld2410c::Ld2410C::new("COM7".to_string());
-            let mut data = String::from("{}");
-            ld2410c.connect().await.unwrap();
-            match ld2410c.read_data().await {
-                Ok(d) => data = serde_json::to_string(&d).unwrap_or_else(|_| "{}".to_string()),
-                Err(e) => eprintln!("Erreur lecture LD2410C: {e}"),
+        .then(move |_| {
+            let port = port.clone();
+            async move {
+                let mut ld2410c = ld2410c::Ld2410C::new(port);
+                let mut data = String::from("{}");
+                ld2410c.connect().await.unwrap();
+                match ld2410c.read_data().await {
+                    Ok(d) => data = serde_json::to_string(&d).unwrap_or_else(|_| "{}".to_string()),
+                    Err(e) => eprintln!("Erreur lecture LD2410C: {e}"),
+                }
+                Ok::<_, Infallible>(Event::default().data(data))
             }
-            Ok::<_, Infallible>(Event::default().data(data))
         });
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
