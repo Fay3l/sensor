@@ -29,19 +29,17 @@
 
         .content {
             display: grid;
-            grid-template-columns: 30% 68%;
+            grid-template-columns: 20% 80%;
             align-items: stretch;
-            gap: 20px;
-            padding: 10px;
-            width: 100%;
+            gap: 50px;
+            margin: 10px;
+            width: 95%;
             height: 100%;
-            box-sizing: border-box;
         }
 
         table {
             background: white;
             border-collapse: collapse;
-            width: 0;
         }
 
         th,
@@ -51,6 +49,7 @@
             text-align: center;
         }
 
+
         #radarCanvas {
             background-color: black;
             border-radius: 15px;
@@ -59,8 +58,6 @@
             height: 100%;
             object-fit: contain;
         }
-
-        table-content {}
     </style>
 </head>
 
@@ -91,9 +88,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        <div>
-            <canvas id="radarCanvas"></canvas>
-        </div>
+        <canvas id="radarCanvas" width="700" height="400"></canvas>
     </div>
 
     <script>
