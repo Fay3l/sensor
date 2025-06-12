@@ -67,6 +67,12 @@ Live data is updated via SSE (Server-Sent Events).
 - Measures distance using time-of-flight.
 - Communicates via UART (serial).
 
+### TOF200F (Time-of-Flight Sensor)
+- Provides high-precision distance measurements using time-of-flight technology.
+- Offers a wide detection range and fast response time, suitable for real-time applications.
+- Communicates via UART (serial).
+- Ideal for scenarios requiring accurate and rapid distance sensing.
+
 ## Troubleshooting
 
 - **No data?** Check your COM port assignments and that no other program is using the port.
