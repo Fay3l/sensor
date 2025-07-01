@@ -140,7 +140,13 @@
                 // Cercle de la cible
                 ctx.beginPath();
                 ctx.arc(px, py, 6, 0, 2 * Math.PI);
-                ctx.fillStyle = target.speed < 0 ? 'lime' : (target.speed > 0 ? 'red' : 'gray');
+                if (target.speed < 0) {
+                    ctx.fillStyle = 'lime';
+                } else if (target.speed > 0) {
+                    ctx.fillStyle = 'red';
+                } else {
+                    ctx.fillStyle = 'gray';
+                }
                 ctx.fill();
 
                 // Etiquette
