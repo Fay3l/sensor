@@ -13,7 +13,7 @@ pub struct Ld2410C {
     stream: Option<SerialStream>,
 }
 #[derive(Debug, Clone, PartialEq, Serialize)]
-enum DataType {
+pub enum DataType {
     EngineeringMode = 0x01,
     TargetBasicInformation = 0x02,
     NoDataType,

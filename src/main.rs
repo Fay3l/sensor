@@ -1,5 +1,3 @@
-use crate::ld2410c::Ld2410C;
-
 
 pub mod ld2410c;
 pub mod tf_luna;
@@ -9,7 +7,7 @@ pub mod rd03d;
 
 #[tokio::main]
 async fn main() {
-    let app = api::api("COM7".to_string()).await;
+    let app = api::api("COM7".to_string(),ld2410c::DataType::EngineeringMode).await;
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();

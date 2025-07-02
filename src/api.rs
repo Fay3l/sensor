@@ -2,13 +2,20 @@ use std::convert::Infallible;
 
 use crate::{ld2410c, rd03d};
 use askama::Template;
-use axum::{response::{sse::{Event, KeepAlive}, Sse}, routing::get, Router};
+use axum::{
+    response::{
+        sse::{Event, KeepAlive},
+        Sse,
+    },
+    routing::get,
+    Router,
+};
 use futures::Stream;
 use serde::Serialize;
 use tokio_stream::{wrappers::IntervalStream, StreamExt};
 use tower_http::cors::{Any, CorsLayer};
 
-#[derive(Template,Serialize)]
+#[derive(Template, Serialize)]
 #[template(path = "rd03d.html")]
 struct Rd03dTemplate<'a> {
     targets: &'a [rd03d::Target],
@@ -20,19 +27,27 @@ struct Ld2410cTemplate {
     data: ld2410c::Ld2410CData,
 }
 
-pub async fn api(port: String) -> Router {
+pub async fn api(port: String, set_data_type_ld2410c: ld2410c::DataType) -> Router {
     let rd03d_port = port.clone();
     let rd03d_sse_port = port.clone();
     let ld2410c_port = port.clone();
     let ld2410c_sse_port = port.clone();
     Router::new()
         .route("/rd03d", get(move || rd03d_handler(rd03d_port.clone())))
-        .route("/rd03d/sse", get(move || rd03d_sse_handler(rd03d_sse_port.clone())))
-        .route("/ld2410c", get(move || ld2410c_handler(ld2410c_port.clone())))
-        .route("/ld2410c/sse", get(move || ld2410c_sse_handler(ld2410c_sse_port.clone())))  
+        .route(
+            "/rd03d/sse",
+            get(move || rd03d_sse_handler(rd03d_sse_port.clone())),
+        )
+        .route(
+            "/ld2410c",
+            get(move || ld2410c_handler(ld2410c_port.clone())),
+        )
+        .route(
+            "/ld2410c/sse",
+            get(move || ld2410c_sse_handler(ld2410c_sse_port.clone(), set_data_type_ld2410c)),
+        )
         .layer(CorsLayer::new().allow_origin(Any))
 }
-
 
 async fn rd03d_sse_handler(port: String) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let interval = tokio::time::interval(std::time::Duration::from_secs(1));
@@ -47,7 +62,8 @@ async fn rd03d_sse_handler(port: String) -> Sse<impl Stream<Item = Result<Event,
                     let target3 = rd03d.get_target(3);
                     if let (Some(t1), Some(t2), Some(t3)) = (target1, target2, target3) {
                         rd03d.targets = vec![t1.clone(), t2.clone(), t3.clone()];
-                        let data = serde_json::to_string(&rd03d.targets).unwrap_or_else(|_| "[]".to_string());
+                        let data = serde_json::to_string(&rd03d.targets)
+                            .unwrap_or_else(|_| "[]".to_string());
                         Ok(Event::default().data(data))
                     } else {
                         rd03d.targets.clear();
@@ -63,7 +79,6 @@ async fn rd03d_sse_handler(port: String) -> Sse<impl Stream<Item = Result<Event,
     });
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
-
 
 async fn rd03d_handler(port: String) -> axum::response::Html<String> {
     let mut rd03d = rd03d::RD03D::new(port);
@@ -94,20 +109,52 @@ async fn ld2410c_handler(port: String) -> axum::response::Html<String> {
 }
 
 // Handler SSE pour /ld2410c/sse
-async fn ld2410c_sse_handler(port: String) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+async fn ld2410c_sse_handler(
+    port: String,
+    data_type: ld2410c::DataType,
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let port = port.clone();
     let stream = IntervalStream::new(tokio::time::interval(std::time::Duration::from_secs(1)))
         .then(move |_| {
             let port = port.clone();
-            async move {
-                let mut ld2410c = ld2410c::Ld2410C::new(port);
-                let mut data = String::from("{}");
-                ld2410c.connect().await.unwrap();
-                match ld2410c.read_data().await {
-                    Ok(d) => data = serde_json::to_string(&d).unwrap_or_else(|_| "{}".to_string()),
-                    Err(e) => eprintln!("Erreur lecture LD2410C: {e}"),
+            {
+                let value = data_type.clone();
+                async move {
+                    match value {
+                        ld2410c::DataType::EngineeringMode => {
+                            let mut ld2410c = ld2410c::Ld2410C::new(port);
+                            let mut data = String::from("{}");
+
+                            if ld2410c.set_engineering_mode().await.is_ok()
+                                && ld2410c.connect().await.is_ok()
+                            {
+                                match ld2410c.read_data().await {
+                                    Ok(d) => {
+                                        data = serde_json::to_string(&d)
+                                            .unwrap_or_else(|_| "{}".to_string())
+                                    }
+                                    Err(e) => eprintln!("Erreur lecture LD2410C: {e}"),
+                                }
+                            }
+                            Ok::<_, Infallible>(Event::default().data(data))
+                        }
+                        ld2410c::DataType::TargetBasicInformation => {
+                            let mut ld2410c = ld2410c::Ld2410C::new(port);
+                            let mut data = String::from("{}");
+                            if ld2410c.connect().await.is_ok() {
+                                match ld2410c.read_data().await {
+                                    Ok(d) => {
+                                        data = serde_json::to_string(&d)
+                                            .unwrap_or_else(|_| "{}".to_string())
+                                    }
+                                    Err(e) => eprintln!("Erreur lecture LD2410C: {e}"),
+                                }
+                            };
+                            Ok::<_, Infallible>(Event::default().data(data))
+                        }
+                        _ => Ok::<_, Infallible>(Event::default().data("{}")),
+                    }
                 }
-                Ok::<_, Infallible>(Event::default().data(data))
             }
         });
     Sse::new(stream).keep_alive(KeepAlive::default())
