@@ -1,6 +1,6 @@
+use serde::Serialize;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_serial::{SerialPortBuilderExt, SerialStream};
-
 
 pub struct TfLuna {
     path: String,
@@ -8,6 +8,21 @@ pub struct TfLuna {
     stream: Option<SerialStream>,
 }
 
+#[derive(Debug,Serialize,Clone)]
+pub struct TfLunaData {
+    distance: u16,
+}
+impl TfLunaData {
+    pub fn new(data: Vec<u8>) -> Self {
+        Self {
+            distance: u16::from_be_bytes([data[3], data[2]]),
+        }
+    }
+
+    pub fn distance(&self) -> u16 {
+        self.distance
+    }
+}
 pub enum OutputFormat {
     NineByteCm = 0x01,
     PIX = 0x02,
@@ -32,7 +47,7 @@ pub enum OutputFrequency {
 }
 
 pub enum OutputMode {
-    Frequency =0x03,
+    Frequency = 0x03,
     DistanceLimit = 0x04,
     OutputFormat = 0x05,
     BaudRate = 0x06,
@@ -63,12 +78,13 @@ impl TfLuna {
         }
     }
 
-    pub async fn read_data(&mut self) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    pub async fn read_data(&mut self) -> Result<TfLunaData, Box<dyn std::error::Error>> {
         let mut buf = [0u8; 32];
         match self.stream.as_mut().unwrap().read(&mut buf).await {
             Ok(n) => {
-                println!("Received: {:?}", &buf[..n]);
-                Ok(buf[..n].to_vec())
+                let _ = std::time::Duration::from_millis(250);
+                let tf_luna_data = TfLunaData::new(buf[..n].to_vec()); // Wait for 250ms to ensure data is read
+                Ok(tf_luna_data)
             }
             Err(e) => {
                 println!("Error: {:?}", e);
@@ -88,17 +104,17 @@ impl TfLuna {
         }
     }
 
-    pub async fn get_version_information(&mut self) {
-        let command = [0x5A, 0x04, 0x01, 0x00];
-        self.write_data(&command).await;
-        let res = self.read_data().await.unwrap();
-        if res.len() < 4 {
-            println!("Error: Invalid response length");
-            return;
-        }
-        let version = format!("{}.{}.{}", res[5], res[4], res[3]);
-        println!("Version information sent. {:?}", version);
-    }
+    // pub async fn get_version_information(&mut self) {
+    //     let command = [0x5A, 0x04, 0x01, 0x00];
+    //     self.write_data(&command).await;
+    //     let res = self.read_data().await.unwrap();
+    //     if res.len() < 4 {
+    //         println!("Error: Invalid response length");
+    //         return;
+    //     }
+    //     let version = format!("{}.{}.{}", res[5], res[4], res[3]);
+    //     println!("Version information sent. {:?}", version);
+    // }
 
     pub async fn set_output_format_setting(&mut self, format: OutputFormat) {
         let command: [u8; 5] = [0x5A, 0x05, 0x05, format as u8, 0x00];
@@ -146,8 +162,8 @@ impl TfLuna {
         ];
         self.write_data(&command).await;
     }
-    pub async fn get_configuration(&mut self,output_mode: OutputMode) {
-        let command = [0x5A, 0x05, 0x3F,output_mode as u8, 0x00];
+    pub async fn get_configuration(&mut self, output_mode: OutputMode) {
+        let command = [0x5A, 0x05, 0x3F, output_mode as u8, 0x00];
         self.write_data(&command).await;
         self.read_data().await.unwrap();
     }

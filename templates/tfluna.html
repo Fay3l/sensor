@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>TF-Luna</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .distance { font-size: 2em; color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <h1>TF-Luna</h1>
+    <div>
+        Distance : <span class="distance" id="distance">--</span> cm
+    </div>
+
+    <script>
+        // Exemple de récupération de la distance via une API (à adapter selon votre backend)
+        const distanceElem = document.getElementById('distance');
+        const evtSource = new EventSource('/tfluna/sse');
+
+        evtSource.onmessage = function(event) {
+            const tfluna = JSON.parse(event.data);
+            distanceElem.textContent = tfluna.distance ? tfluna.distance : '--';
+        };
+
+        evtSource.onerror = function() {
+            distanceElem.textContent = '--';
+        };
+    </script>
+</body>
+</html>

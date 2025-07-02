@@ -1,9 +1,8 @@
-
-pub mod ld2410c;
-pub mod tf_luna;
 pub mod api;
-pub mod tof200f;
+pub mod ld2410c;
 pub mod rd03d;
+pub mod tf_luna;
+pub mod tof200f;
 
 #[tokio::main]
 async fn main() {
@@ -13,11 +12,14 @@ async fn main() {
         .unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
-    // let mut ld2410c = Ld2410C::new("COM7".to_string());
-    // ld2410c.connect().await.unwrap();
-    // loop {
-    //     let res = ld2410c.read_data().await.unwrap();    
-    //     println!("Received data: {:?}", res);
+    // let mut tf_luna = tf_luna::TfLuna::new("COM7".to_string());
+    // if let Err(e) = tf_luna.connect().await {
+    //     eprintln!("Erreur connexion TF-Luna: {e}");
+    //     return;
+    // } else {
+    //     loop {
+    //         let res = tf_luna.read_data().await.unwrap();
+    //         println!("Distance: {:?} cm", res);
+    //     }
     // }
 }
-

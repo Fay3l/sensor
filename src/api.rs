@@ -1,6 +1,6 @@
 use std::convert::Infallible;
 
-use crate::{ld2410c, rd03d};
+use crate::{ld2410c, rd03d, tf_luna};
 use askama::Template;
 use axum::{
     response::{
@@ -14,6 +14,12 @@ use futures::Stream;
 use serde::Serialize;
 use tokio_stream::{wrappers::IntervalStream, StreamExt};
 use tower_http::cors::{Any, CorsLayer};
+
+#[derive(Template, Serialize)]
+#[template(path = "tfluna.html")]
+struct TfLunaTemplate {
+    pub data: tf_luna::TfLunaData, // Replace TfLunaData with the actual data type returned by TfLuna::read_data()
+}
 
 #[derive(Template, Serialize)]
 #[template(path = "rd03d.html")]
@@ -46,6 +52,14 @@ pub async fn api(port: String, set_data_type_ld2410c: ld2410c::DataType) -> Rout
             "/ld2410c/sse",
             get(move || ld2410c_sse_handler(ld2410c_sse_port.clone(), set_data_type_ld2410c)),
         )
+        .route("/tfluna", get({
+            let port = port.clone();
+            move || tf_luna_handler(port.clone())
+        }))
+        .route("/tfluna/sse", get({
+            let port = port.clone();
+            move || tf_luna_sse_handler(port.clone())
+        }))
         .layer(CorsLayer::new().allow_origin(Any))
 }
 
@@ -154,6 +168,48 @@ async fn ld2410c_sse_handler(
                         }
                         _ => Ok::<_, Infallible>(Event::default().data("{}")),
                     }
+                }
+            }
+        });
+    Sse::new(stream).keep_alive(KeepAlive::default())
+}
+
+async fn tf_luna_handler(
+    port: String,
+) -> axum::response::Html<String> {
+    let mut tf_luna = crate::tf_luna::TfLuna::new(port);
+    if let Err(e) = tf_luna.connect().await {
+        return axum::response::Html(format!("<p>Erreur connexion TF-Luna: {e}</p>"));
+    }
+    let data = match tf_luna.read_data().await {
+        Ok(d) => d,
+        Err(e) => return axum::response::Html(format!("<p>Erreur lecture TF-Luna: {e}</p>")),
+    };
+    let tpl = TfLunaTemplate { data };
+    axum::response::Html(tpl.render().unwrap())
+}
+
+async fn tf_luna_sse_handler(
+    port: String,
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    let port = port.clone();
+    let stream = IntervalStream::new(tokio::time::interval(std::time::Duration::from_secs(1)))
+        .then(move |_| {
+            let port = port.clone();
+            async move {
+                let mut tf_luna = crate::tf_luna::TfLuna::new(port);
+                if tf_luna.connect().await.is_ok() {
+                    match tf_luna.read_data().await {
+                        Ok(data) => {
+                            Ok(Event::default().data(serde_json::to_string(&data).unwrap_or_else(|_| "{}".to_string())))
+                        }
+                        Err(e) => {
+                            eprintln!("Erreur lecture TF-Luna: {e}");
+                            Ok(Event::default().data("{}"))
+                        }
+                    }
+                } else {
+                    Ok(Event::default().data("{}"))
                 }
             }
         });
