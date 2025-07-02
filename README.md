@@ -47,9 +47,9 @@ By default, the backend listens on http://localhost:3000.
 Open your browser and go to:
 
   
-http://localhost:3000/rd03d — RD03D radar dashboard  
-http://localhost:3000/ld2410c — LD2410C radar dashboard
-http://localhost:3000/tfluna — TFLUNA radar dashboard
+<p>http://localhost:3000/rd03d — RD03D radar dashboard</p>  
+<p>http://localhost:3000/ld2410c — LD2410C radar dashboard</p>  
+<p>http://localhost:3000/tfluna — TFLUNA radar dashboard</p>  
 
 Live data is updated via SSE (Server-Sent Events).
 
